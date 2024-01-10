@@ -29,10 +29,48 @@ function generateKML(waypoints) {
     }
 
     let coordinates = '';
+    let placemarks='';
+    let route='';
 
-    waypoints.forEach((waypoint) => {
+    waypoints.forEach((waypoint,index) => {
         if (waypoint && waypoint.Latitude && waypoint.Longitude && waypoint.Altitude) {
             coordinates += `${waypoint.Longitude},${waypoint.Latitude},${waypoint.Altitude}\n`;
+            placemarks+= `<Placemark id="Waypoint-${index}">
+            <name>Waypoint${index}</name>
+            <LookAt>
+                <longitude>${waypoint.Longitude}</longitude>
+                <latitude>${waypoint.Latitude}</latitude>
+                <altitude>${waypoint.Altitude}</altitude>
+                <heading>0</heading>
+                <tilt>0</tilt>
+                <gx:fovy>35</gx:fovy>
+                <range>3096.626845432038</range>
+                <altitudeMode>absolute</altitudeMode>
+            </LookAt>
+            <styleUrl>#__managed_style_037290E05A2E28EFAFD0</styleUrl>
+            <Point>
+                <coordinates>${waypoint.Longitude},${waypoint.Latitude},${waypoint.Altitude}</coordinates>
+            </Point>
+            </Placemark>`;
+            route = `<Placemark id="ROUTE">
+            <name>ROUTE</name>
+            <LookAt>
+                <longitude>${waypoint.Longitude}</longitude>
+                <latitude>${waypoint.Latitude}</latitude>
+                <altitude>${waypoint.Altitude}</altitude>
+                <heading>0</heading>
+                <tilt>0</tilt>
+                <gx:fovy>35</gx:fovy>
+                <range>3096.626845432038</range>
+                <altitudeMode>absolute</altitudeMode>
+            </LookAt>
+            <styleUrl>#__managed_style_037290E05A2E28EFAFD0</styleUrl>
+            <LineString>
+			<coordinates>
+				${coordinates}
+			</coordinates>
+		    </LineString>
+            </Placemark>`;
         }
     });
   
@@ -95,25 +133,8 @@ function generateKML(waypoints) {
               <styleUrl>#__managed_style_242FACD5942E00097BDB</styleUrl>
           </Pair>
       </StyleMap>
-      <Placemark id="0CC905A2362E00097BDB">
-      <name>4points</name>
-      <LookAt>
-          <longitude>32.83512734010666</longitude>
-          <latitude>39.8981913599981</latitude>
-          <altitude>944.8738548983249</altitude>
-          <heading>0</heading>
-          <tilt>0</tilt>
-          <gx:fovy>30</gx:fovy>
-          <range>754.4297002805253</range>
-          <altitudeMode>absolute</altitudeMode>
-      </LookAt>
-      <styleUrl>#__managed_style_0A1DE3C3ED2E00097BDB</styleUrl>
-      <LineString>
-          <coordinates>
-          ${coordinates.trim()}
-          </coordinates>
-      </LineString>
-  </Placemark>
+      ${placemarks}
+      ${route}
     </Document>
     </kml>`;
 }
