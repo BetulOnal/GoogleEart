@@ -1,12 +1,24 @@
 import React from 'react';
 
-export default function Convert({ waypoints }) {
-    const kmlContent = generateKML(waypoints);
+interface ConvertProps {
+    waypoints:(string|number)[];
+  };
+
+interface Waypoint {
+    Latitude: number;
+    Longitude: number;
+    Altitude: number;
+    // Add other properties if needed
+  };
+
+const Convert: React.FC<ConvertProps> = ({ waypoints }) => {
+    // Assuming generateKML is a function that generates KML content based on waypoints
+    const kmlContent: string = generateKML(waypoints);
 
     const handleDownload = () => {
-        const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const blob:Blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
+        const url:string = URL.createObjectURL(blob);
+        const a:HTMLAnchorElement = document.createElement('a');
         a.href = url;
         a.download = 'new.kml';
         document.body.appendChild(a);
@@ -22,7 +34,7 @@ export default function Convert({ waypoints }) {
     );
 }
 
-function generateKML(waypoints) {
+function generateKML(waypoints:Waypoint[]):string {
     if (!waypoints || !Array.isArray(waypoints)) {
         console.error("Waypoints are invalid ");
         return '';
@@ -138,3 +150,5 @@ function generateKML(waypoints) {
     </Document>
     </kml>`;
 }
+
+export default Convert

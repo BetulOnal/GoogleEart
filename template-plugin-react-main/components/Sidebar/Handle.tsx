@@ -1,32 +1,46 @@
-import React, {useState} from "react";
+import React, {useState, ChangeEvent, FormEvent} from "react";
 import XMLParser from 'react-xml-parser';
 
 
-export default function Handle({ onUpdateWaypoints }) {
-    const [file, setFile] = useState();
+interface Waypoint {
+    Index: string;
+    Command: string;
+    Latitude: number;
+    Longitude: number;
+    Altitude: number;
+    Parameter: string;
+  };
+  
+interface HandleProps {
+    onUpdateWaypoints: (waypoints: Waypoint[]) => void;
+  };
 
-    function handleFile(event) {
+const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints }) => {
+    const [file, setFile] = useState<File | undefined>();
+
+    function handleFile(event:ChangeEvent<HTMLInputElement>) {
         setFile(event.target.files[0]);
     }
 
-    function handleUpload(event) {
+    async function handleUpload(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const formData = new FormData();
         formData.append("file", file);
-        fetch(
-            'https://httpbin.org/post',
-            {
-                method: "POST",
-                body: formData
+        try {
+            const response = await fetch('https://httpbin.org/post', {
+              method: "POST",
+              body: formData
+            });
+      
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
             }
-        )
-        .then((response) => response.json())
-        .then((result) => {
-            console.log(result.files.file)
-            const xmlText = result.files.file
+      
+            const result = await response.json();
+            const xmlText:string = result.files.file
             const XMLParser = require('react-xml-parser');
             const xml = new XMLParser().parseFromString(xmlText)
-            const waypointsList = xml.getElementsByTagName('WayPoints').map(waypoint => ({
+            const waypointsList:Waypoint[] = xml.getElementsByTagName('WayPoints').map(waypoint => ({
                 Index: parseInt(waypoint.getElementsByTagName('Index')[0].value, 10),
                 Command: parseInt(waypoint.getElementsByTagName('Command')[0].value, 10),
                 Latitude: parseFloat(waypoint.getElementsByTagName('Latitude')[0].value),
@@ -39,11 +53,9 @@ export default function Handle({ onUpdateWaypoints }) {
                 WayPoints: waypointsList
             };
             onUpdateWaypoints(data.WayPoints);
-            console.log(data);
-        })
-        .catch(error => {
+        }catch(error) {
             console.error("Error:", error)
-        });
+        }
         }
 
     return(
@@ -53,4 +65,6 @@ export default function Handle({ onUpdateWaypoints }) {
     <button >Upload File </button>
     </form>  
     )
-}
+};
+
+export default Handle;
