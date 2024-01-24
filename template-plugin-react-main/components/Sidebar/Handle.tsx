@@ -1,21 +1,11 @@
 import React, {useState, ChangeEvent, FormEvent} from "react";
 import XMLParser from 'react-xml-parser';
+import { WaypointCatch, HandleProps, GeoFencePoint} from "./interfaces";
 
 
-interface Waypoint {
-    Index: string;
-    Command: string;
-    Latitude: number;
-    Longitude: number;
-    Altitude: number;
-    Parameter: string;
-  };
-  
-interface HandleProps {
-    onUpdateWaypoints: (waypoints: Waypoint[]) => void;
-  };
 
-const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints }) => {
+
+const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoints, onMaxAltChange }) => {
     const [file, setFile] = useState<File | undefined>();
 
     function handleFile(event:ChangeEvent<HTMLInputElement>) {
@@ -40,19 +30,29 @@ const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints }) => {
             const xmlText:string = result.files.file
             const XMLParser = require('react-xml-parser');
             const xml = new XMLParser().parseFromString(xmlText)
-            const waypointsList:Waypoint[] = xml.getElementsByTagName('WayPoints').map(waypoint => ({
-                Index: parseInt(waypoint.getElementsByTagName('Index')[0].value, 10),
-                Command: parseInt(waypoint.getElementsByTagName('Command')[0].value, 10),
+            const waypointsList:WaypointCatch[] = xml.getElementsByTagName('WayPoints').map(waypoint => ({
+                Index: parseInt(waypoint.getElementsByTagName('Index')[0].value),
+                Command: parseInt(waypoint.getElementsByTagName('Command')[0].value),
                 Latitude: parseFloat(waypoint.getElementsByTagName('Latitude')[0].value),
                 Longitude: parseFloat(waypoint.getElementsByTagName('Longitude')[0].value),
                 Altitude: parseFloat(waypoint.getElementsByTagName('Altitude')[0].value),
-                Parameter: parseInt(waypoint.getElementsByTagName('Parameter')[0].value, 10)
+                Parameter: parseInt(waypoint.getElementsByTagName('Parameter')[0].value)
             }));
-
+            const geoFencePointList: GeoFencePoint[]= xml.getElementsByTagName('GeoFencePoint').map(geofencepoint=>({
+                Latitude: parseFloat(geofencepoint.getElementsByTagName('Latitude')[0].value),
+                Longitude: parseFloat(geofencepoint.getElementsByTagName('Longitude')[0].value),
+                
+            }));
+            const goeFenceMaxAlt = parseFloat (xml.getElementsByTagName('MaxAlt')[0].value);
+            
             const data = {
-                WayPoints: waypointsList
+                WayPoints: waypointsList,
+                GeoFencePoints:geoFencePointList
             };
             onUpdateWaypoints(data.WayPoints);
+            onUpdateGeoFencePoints(data.GeoFencePoints)
+            onMaxAltChange(goeFenceMaxAlt);
+
         }catch(error) {
             console.error("Error:", error)
         }

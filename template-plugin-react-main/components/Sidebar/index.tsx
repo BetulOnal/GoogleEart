@@ -34,9 +34,18 @@ export const Sidebar: FC<ISidebar> = ({ pluginApi }: ISidebar) => {
     };
   }, []);
   const [waypoints, setWaypoints] = useState([]);
+  const [geofencepoints, setGeoFencePoints] = useState([]);
+  const [maxAlt, setMaxAlt] = useState<number | undefined>();
+
+  const updateMaxAlt = (newMaxAlt: number) => {
+    setMaxAlt(newMaxAlt);
+  };
 
   const updateWaypoints = (newWaypoints) => {
     setWaypoints(newWaypoints);
+  };
+  const updateGeoFencePoints = (newGeoFencePoints) => {
+    setGeoFencePoints(newGeoFencePoints);
   };
 
   return (
@@ -54,8 +63,8 @@ export const Sidebar: FC<ISidebar> = ({ pluginApi }: ISidebar) => {
       ) :
        (
         <div>
-        <Handle onUpdateWaypoints={updateWaypoints} />
-        <Convert waypoints={waypoints} />
+        <Handle onUpdateWaypoints={updateWaypoints} onUpdateGeoFencePoints={updateGeoFencePoints}  onMaxAltChange={updateMaxAlt}/>
+        <Convert waypoints={waypoints} geofencepoints={geofencepoints}/>
         </div>
       )}
     </RowProvider>
