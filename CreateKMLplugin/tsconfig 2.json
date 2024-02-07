@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "outDir": "out",
+    "sourceMap": true,
+    "jsx": "react-jsx",
+    "noImplicitAny":true,
+    "esModuleInterop": false,
+    "noImplicitReturns":false,
+    "strictNullChecks": true
+  }
+}
