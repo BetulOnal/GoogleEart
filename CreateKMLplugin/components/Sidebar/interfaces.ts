@@ -1,35 +1,59 @@
 export interface ConvertProps {
-    waypoints:(string|number)[];
-    geofencepoint:(string|number)[];
-  };
+  waypoints: WaypointCreate[];
+  geofencepoints: GeoFencepointCreate[];
+  geoFenceSettingPoint: GeoFenceSettingPointCreate; 
+};
 
 export interface WaypointCreate{
-    Latitude: number;
-    Longitude: number;
-    Altitude: number;
-    // Add other properties if needed
-  };
-  export interface GeoFencepointCreate{
-    Latitude: number;
-    Longitude: number;
-    Altitude: number;
-    // Add other properties if needed
+  Index: number;
+  Command: number;
+  Latitude: number;
+  Longitude: number;
+  Altitude: number;
+  Parameter: number ;
+    
   };
 
- export interface WaypointCatch {
-    Index: string;
-    Command: string;
+export interface GeoFencepointCreate{
     Latitude: number;
     Longitude: number;
     Altitude: number;
-    Parameter: string;
   };
+
+export interface GeoFenceSettingPointCreate{
+    RetLat: number;
+    RetLon: number;
+    MinAlt: number;
+    MaxAlt: number;
+  };
+
+export interface WaypointCatch {
+  Index: number;
+  Command: number;
+  Latitude: number;
+  Longitude: number;
+  Altitude: number;
+  Parameter: number ;
+  };
+
+export interface GeoFenceSettingPointCatch{
+  RetLat: number;
+  RetLon: number;
+  MinAlt: number;
+  MaxAlt: number;
+}
   
+
 export interface HandleProps {
-    onUpdateWaypoints: (waypoints: WaypointCatch[]) => void;
-  }; 
+  onUpdateWaypoints: (waypoints: WaypointCatch[]) => void;
+  onUpdateGeoFencePoints: (geofencepoints: GeoFencePoint[]) => void;
+  onUpdateGeoFenceSettingPoint: (geoFenceSettingPoint: GeoFenceSettingPointCreate) => void; 
+};
 
 export interface GeoFencePoint{
   Latitude: number;
   Longitude: number;
 };
+
+
+

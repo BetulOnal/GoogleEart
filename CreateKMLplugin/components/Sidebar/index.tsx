@@ -1,44 +1,38 @@
-import React, { FC, useState, useEffect } from "react";
-import { message, Result } from "antd";
+import React, { FC, useState } from "react";
 import { IPluginApi } from "@qandq/cloud-gcs-core";
-import { Col, Row, RowProvider } from "@qandq/plugin-grid-system"
+//import packageJson from ../../package.json"
 const packageJson = require("../../package.json") as any;
 
-import Handle from "./Handle";
-import Convert from "./Covert";
+
+import HandleFileInfo from "./Handle";
+import KMLConverter from "./Convert";
 
 interface ISidebar {
   pluginApi: IPluginApi;
 }
 export const Sidebar: FC<ISidebar> = ({ pluginApi }: ISidebar) => {
-  const [showError, setShowError] = useState<boolean>(false);
 
-  const handleAddFlightPlan = () => {
-    if (!pluginApi.systemApi.selectedAircraftApi.isPluginSupported()) {
-      setShowError(true);
-    } else {
-      setShowError(false);
-    }
-  };
-
-  useEffect(() => {
-    const activeAircraft = pluginApi.systemApi.selectedAircraftApi.getAircraftIdentifier();
-
-    if (activeAircraft) {
-      handleAddFlightPlan();
-    }
-    pluginApi.eventListener.onActiveAircraftChanged(handleAddFlightPlan);
-
-    return () => {
-      pluginApi.eventListener.removeActiveAircraftChanged(handleAddFlightPlan);
-    };
-  }, []);
+  //This is my code space 
   const [waypoints, setWaypoints] = useState([]);
   const [geofencepoints, setGeoFencePoints] = useState([]);
-  const [maxAlt, setMaxAlt] = useState<number | undefined>();
+  const [geoFenceSettingPoint, setGeoFenceSetting] = useState({
+    RetLat: 0,
+    RetLon: 0,
+    MinAlt: 0,
+    MaxAlt: 0,
+  });
+  const [homePoint, setHomePoint] = useState({
+    Latitude: 0,
+    Longitude: 0,
+    Altitude: 0,
+  });
 
-  const updateMaxAlt = (newMaxAlt: number) => {
-    setMaxAlt(newMaxAlt);
+  const onUpdateHomePoint= (newHomePoint) => {
+    setHomePoint(newHomePoint);
+  };
+
+  const updateGeoFenceSettingPoint = (newGeoFenceSettingPoint) => {
+    setGeoFenceSetting(newGeoFenceSettingPoint);
   };
 
   const updateWaypoints = (newWaypoints) => {
@@ -47,26 +41,11 @@ export const Sidebar: FC<ISidebar> = ({ pluginApi }: ISidebar) => {
   const updateGeoFencePoints = (newGeoFencePoints) => {
     setGeoFencePoints(newGeoFencePoints);
   };
-
+ 
   return (
-    <RowProvider pluginParent={pluginApi.pluginUIManager.getRootElement()}>
-      <Row between="md">
-        <Col lg={5} md={5}></Col>
-        <Col lg={5} md={5}></Col>
-      </Row>
-      {showError ? (
-        //@ts-ignore
-        <Result
-          status="warning"
-          title={`${packageJson.name} plugin is not installed in this aircraft.`}
-        />
-      ) :
-       (
         <div>
-        <Handle onUpdateWaypoints={updateWaypoints} onUpdateGeoFencePoints={updateGeoFencePoints}  onMaxAltChange={updateMaxAlt}/>
-        <Convert waypoints={waypoints} geofencepoints={geofencepoints}/>
+        <HandleFileInfo onUpdateWaypoints={updateWaypoints} onUpdateGeoFencePoints={updateGeoFencePoints} onUpdateGeoFenceSettingPoint={updateGeoFenceSettingPoint} onUpdateHomePoint={onUpdateHomePoint}/>
+        <KMLConverter waypoints={waypoints} geofencepoints={geofencepoints} geoFenceSettingPoint={geoFenceSettingPoint} homePoint={homePoint}/>
         </div>
-      )}
-    </RowProvider>
   );
 };

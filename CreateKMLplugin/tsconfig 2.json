@@ -6,7 +6,7 @@
     "sourceMap": true,
     "jsx": "react-jsx",
     "noImplicitAny":true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "noImplicitReturns":false,
     "strictNullChecks": true
   }

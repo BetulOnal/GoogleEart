@@ -3,6 +3,7 @@ import {
   ConvertProps,
   WaypointCreate,
   GeoFencepointCreate,
+  GeoFenceSettingPointCreate,
 } from "./interfaces";
 
 var GeoHelper = {
@@ -35,13 +36,18 @@ var GeoHelper = {
   },
 };
 
-const Convert: React.FC<ConvertProps> = ({
+const KMLConverter: React.FC<ConvertProps> = ({
   waypoints,
   geofencepoints,
-  maxAlt,
+  geoFenceSettingPoint,
+  homePoint,
 }) => {
-  const kmlContent: string = generateKML(waypoints, geofencepoints, maxAlt);
-
+  const kmlContent: string = generateKML(
+    waypoints,
+    geofencepoints,
+    geoFenceSettingPoint,
+    homePoint
+  );
   const handleDownload = (): void => {
     const blob: Blob = new Blob([kmlContent], {
       type: "application/vnd.google-earth.kml+xml",
@@ -65,16 +71,16 @@ const Convert: React.FC<ConvertProps> = ({
 
 function modCalculate(a: number) {
   return a - 16384 * Math.floor(a / 16384) + 500;
-}
+};
 
 function generateKML(
   waypoints: WaypointCreate[],
   geofencepoints: GeoFencepointCreate[],
-  maxAlt
+  geoFenceSettingPoint: GeoFenceSettingPointCreate,
+  homePoint: any
 ): string {
   if (!waypoints || !Array.isArray(waypoints)) {
-    console.error("Waypoints are invalid ");
-    return "";
+    throw new Error("Waypoints are invalid");
   }
 
   const generatePoints = (center, distance) => {
@@ -93,10 +99,150 @@ function generateKML(
   let route = "";
   let safearea = "";
   let safecoordinates = "";
-  let safearea8 = "";
-  let safearea12 = "";
+  let returnPoint = "";
+  let homePointPlacemark = "";
 
-  waypoints.forEach((waypoint, index): void => {
+  function getName(command) {
+    let waypointName = "";
+    switch (command) {
+      case 0:
+        waypointName = "Manual";
+        break;
+      case 1:
+        waypointName = "ReturnToLaunch";
+        break;
+      case 2:
+        waypointName = "Stabilize";
+        break;
+      case 3:
+        waypointName = "FlyByWireA";
+        break;
+      case 4:
+        waypointName = "FlyByWireB";
+        break;
+      case 5:
+        waypointName = "FlyByGCS";
+        break;
+      case 6:
+        waypointName = "Circle";
+        break;
+      case 7:
+        waypointName = "WayPoint";
+        break;
+      case 8:
+        waypointName = "LoiterUnlimited";
+        break;
+      case 9:
+        waypointName = "LoiterTurns";
+        break;
+      case 10:
+        waypointName = "LoiterTime";
+        break;
+      case 11:
+        waypointName = "LoiterAltitude";
+        break;
+      case 12:
+        waypointName = "ApproachLanding";
+        break;
+      case 13:
+        waypointName = "Land";
+        break;
+      case 14:
+        waypointName = "TakeOff";
+        break;
+      case 15:
+        waypointName = "TaxiStop";
+        break;
+      case 16:
+        waypointName = "TaxiToPoint";
+        break;
+      case 17:
+        waypointName = "TaxiSpeedUp";
+        break;
+      case 18:
+        waypointName = "SetServoAngle";
+        break;
+      case 19:
+        waypointName = "Sit";
+        break;
+      case 20:
+        waypointName = "SetFlightParam";
+        break;
+      case 21:
+        waypointName = "Rescue";
+        break;
+      case 22:
+        waypointName = "Jump";
+        break;
+      case 23:
+        waypointName = "VtolStabilize";
+        break;
+      case 24:
+        waypointName = "VtolHoverByWire";
+        break;
+      case 25:
+        waypointName = "VtolSpeedHold";
+        break;
+      case 26:
+        waypointName = "VtolPositionHold";
+        break;
+      case 27:
+        waypointName = "VtolSpeedUp";
+        break;
+      case 28:
+        waypointName = "VtolTakeOff";
+        break;
+      case 29:
+        waypointName = "VtolLand";
+        break;
+      case 30:
+        waypointName = "VtolHoverTime";
+        break;
+      case 31:
+        waypointName = "RequestDeviceAction";
+        break;
+      case 32:
+        waypointName = "Launch";
+        break;
+      case 33:
+        waypointName = "ChuteLand";
+        break;
+      case 34:
+        waypointName = "VtolTest";
+        break;
+      default:
+        console.error("Unknown waypoint command");
+        break;
+    }
+
+    return waypointName;
+  };
+
+  const geoFenceLoiterPoints = [];
+
+  function generateSafeAreaPlacemark(id, name, area) {
+    return `<Placemark id="">
+              <name>${name}</name>
+              <Style>
+                <PolyStyle>
+                  <color>7f00ffff</color>
+                </PolyStyle>
+              </Style>
+              <Polygon>
+                <extrude>1</extrude>
+                <altitudeMode>relativeToGround</altitudeMode>
+                <outerBoundaryIs>
+                  <LinearRing>
+                    <coordinates>
+                      ${area}
+                    </coordinates>
+                  </LinearRing>
+                </outerBoundaryIs>
+              </Polygon>
+            </Placemark>`;
+  }
+  
+  waypoints.forEach((waypoint) => {
     if (
       waypoint &&
       waypoint.Latitude &&
@@ -104,130 +250,94 @@ function generateKML(
       waypoint.Altitude
     ) {
       coordinates += `${waypoint.Longitude},${waypoint.Latitude},${waypoint.Altitude}\n`;
-      placemarks += `<Placemark id="Waypoint-${index}">
-                <name>Waypoint${index}</name>
-                <Point>
-                <coordinates>${waypoint.Longitude},${waypoint.Latitude},${waypoint.Altitude}</coordinates>
-                </Point>
-                </Placemark>`;
+      placemarks += `<Placemark id="">
+                  <name>${getName(waypoint.Command)}</name>
+                  <Point>
+                  <coordinates>${waypoint.Longitude},${waypoint.Latitude},${
+        waypoint.Altitude
+      }</coordinates>
+                  </Point>
+                  </Placemark>`;
       route = `<Placemark id="">
-              <name>GeoFenceRoute</name>
-              <Style>
-              <PolyStyle>
-              <color>7f00ffff</color>
-              </PolyStyle>
-              </Style>
-              <LineString>
-              <extrude>1</extrude>
-              <altitudeMode>relativeToGround</altitudeMode>
-              <coordinates>
-              ${coordinates} 
-              </coordinates>
-              </LineString>
-              </Placemark>`;
-
-      switch (waypoint.Command) {
-        case 8:
-          const distance8 = modCalculate(waypoint.Parameter);
-          const center8 = {
-            longitude: waypoint.Longitude,
-            latitude: waypoint.Latitude,
-          };
-          const allPoints8 = generatePoints(center8, distance8);
-          const area8 = allPoints8
-            .map(
-              (point) =>
-                `${point.longitude},${point.latitude},${waypoint.Altitude}`
-            )
-            .join("\n");
-          safearea8 = `<Placemark id="">
-                    <name>safearea8</name>
-                    <Style>
-                    <PolyStyle>
-                    <color>7f00ffff</color>
-                    </PolyStyle>
-                    </Style>
-		                <Polygon>
-			              <extrude>1</extrude>
-			              <altitudeMode>relativeToGround</altitudeMode>
-			              <outerBoundaryIs>
-			              <LinearRing>
-					          <coordinates>
-                    ${area8}
-					          </coordinates>
-				            </LinearRing>
-			              </outerBoundaryIs>
-		                </Polygon>
-                    </Placemark>`;
-          break;
-        case 9:
-          const distance9 = modCalculate(waypoint.Parameter);
-          const center9 = {
-            longitude: waypoint.Longitude,
-            latitude: waypoint.Latitude,
-          };
-          const allPoints9 = generatePoints(center9, distance9);
-          break;
-        case 10:
-          const distance10 = modCalculate(waypoint.Parameter);
-          const center10 = {
-            longitude: waypoint.Longitude,
-            latitude: waypoint.Latitude,
-          };
-          const allPoints10 = generatePoints(center10, distance10);
-        case 11:
-          const distance11 = modCalculate(waypoint.Parameter);
-          const center11 = {
-            longitude: waypoint.Longitude,
-            latitude: waypoint.Latitude,
-          };
-          const allPoints11 = generatePoints(center11, distance11);
-
-        case 12: 
-          const distance12 = modCalculate(waypoint.Parameter);
-          const center12 = {
-            longitude: waypoint.Longitude,
-            latitude: waypoint.Latitude,
-          };
-
-          const allPoints12 = generatePoints(center12, distance12);
-          const area12 = allPoints12
-            .map(
-              (point) =>
-                `${point.longitude},${point.latitude},${waypoint.Altitude}`
-            )
-            .join("\n");
-          safearea12 = `<Placemark id="">
-                    <name>safearea12</name>
-                    <Style>
-                    <PolyStyle>
-                    <color>7f00ffff</color>
-                    </PolyStyle>
-                    </Style>
-		            <Polygon>
-			        <extrude>1</extrude>
-			        <altitudeMode>relativeToGround</altitudeMode>
-			        <outerBoundaryIs>
-			        <LinearRing>
-					<coordinates>
-                    ${area12}
-					</coordinates>
-				    </LinearRing>
-			        </outerBoundaryIs>
-		            </Polygon>
-                   </Placemark>`;
-          break;
-        default:
-          console.log("Loiter point not find");
-          // Varsayılan durumun kodu
-          break;
+                <name>GeoFenceRoute</name>
+                <Style>
+                <PolyStyle>
+                <color>7f00ffff</color>
+                </PolyStyle>
+                </Style>
+                <LineString>
+                <extrude>1</extrude>
+                <altitudeMode>relativeToGround</altitudeMode>
+                <coordinates>
+                ${coordinates} 
+                </coordinates>
+                </LineString>
+                </Placemark>`;
+  
+      const command = waypoint.Command;
+  
+      if (command >= 8 && command <= 12) {
+        const distance = modCalculate(waypoint.Parameter);
+        const center = {
+          longitude: waypoint.Longitude,
+          latitude: waypoint.Latitude,
+        };
+        const allPoints = generatePoints(center, distance);
+        const area = allPoints
+          .map(
+            (point) =>
+              `${point.longitude},${point.latitude},${waypoint.Altitude}`
+          )
+          .join("\n");
+  
+        const safeAreaId = command === 8 ? "" : command;
+        const safeAreaName = `safearea${safeAreaId}`;
+  
+        geoFenceLoiterPoints.push(generateSafeAreaPlacemark(safeAreaId, safeAreaName, area));
+      } else {
+        console.error("Loiter point not found");
       }
     }
   });
+
+
+  const geoFenceMaxHight = Math.round(geoFenceSettingPoint.MaxAlt);
+  returnPoint = `<Placemark id="">
+                <name>Return Point</name>
+                <Style >
+			          <IconStyle>
+				        <color>ffff0000</color>
+				        </IconStyle>
+                <LabelStyle>
+				        <color>ffcc0000</color>
+			          </LabelStyle>
+                </Style>
+                <Point>
+                <coordinates>${geoFenceSettingPoint.RetLon},${geoFenceSettingPoint.RetLat},${geoFenceMaxHight}</coordinates>
+                </Point>
+                </Placemark>`;
+  homePointPlacemark = `<Placemark id="">
+                        <name>Home Point</name>
+                        <Style >
+			                  <IconStyle>
+				                <color>ff0000ff</color>
+				                <Icon>
+					              <href>https://maps.google.com/mapfiles/kml/pal3/icon21.png</href>
+				                </Icon>
+			                  </IconStyle>
+                        <LabelStyle>
+				                <color>ff0000ff</color>
+			                  </LabelStyle>
+		                    </Style>
+                        <Point>
+                      <coordinates>${homePoint.Longitude},${homePoint.Latitude},${homePoint.Altitude}</coordinates>
+                      </Point>
+                      </Placemark>`;
+
   if (geofencepoints && Array.isArray(geofencepoints)) {
     geofencepoints.forEach((geofencepoint, index): void => {
-      safecoordinates += `${geofencepoint.Longitude},${geofencepoint.Latitude},${maxAlt}\n`;
-      let safecoordinateslast = `${geofencepoints[0].Longitude},${geofencepoints[0].Latitude},${maxAlt}\n `;
+      safecoordinates += `${geofencepoint.Longitude},${geofencepoint.Latitude},${geoFenceMaxHight}\n`;
+      let safecoordinateslast = `${geofencepoints[0].Longitude},${geofencepoints[0].Latitude},${geoFenceMaxHight}\n`;
       //if you want to another version you need to safecoordinateslast = `${(geofencepoints[0].Longitude)-10},${geofencepoints[0].Latitude},200\n `;
       safearea = `<Placemark id="">
                     <name>GeoFenceArea</name>
@@ -253,10 +363,11 @@ function generateKML(
         ${placemarks}
         ${route}
         ${safearea}
-        ${safearea8}
-        ${safearea12}
+        ${geoFenceLoiterPoints.join('\n')}
+        ${returnPoint}
+        ${homePointPlacemark}
     </Document>
     </kml>`;
 }
 
-export default Convert;
+export default KMLConverter;

@@ -1,11 +1,11 @@
 import React, {useState, ChangeEvent, FormEvent} from "react";
 import XMLParser from 'react-xml-parser';
-import { WaypointCatch, HandleProps, GeoFencePoint} from "./interfaces";
+import { WaypointCatch, HandleProps, GeoFencePoint,GeoFenceSettingPointCatch} from "./interfaces";
 
 
 
 
-const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoints, onMaxAltChange }) => {
+const HandleFileInfo: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoints, onUpdateGeoFenceSettingPoint, onUpdateHomePoint }) => {
     const [file, setFile] = useState<File | undefined>();
 
     function handleFile(event:ChangeEvent<HTMLInputElement>) {
@@ -14,22 +14,13 @@ const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoint
 
     async function handleUpload(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const formData = new FormData();
-        formData.append("file", file);
-        try {
-            const response = await fetch('https://httpbin.org/post', {
-              method: "POST",
-              body: formData
-            });
-      
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-      
-            const result = await response.json();
-            const xmlText:string = result.files.file
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const contents = e.target.result;
+            // import yaparak kullanman lazim 
             const XMLParser = require('react-xml-parser');
-            const xml = new XMLParser().parseFromString(xmlText)
+            const xml = new XMLParser().parseFromString(contents);
+
             const waypointsList:WaypointCatch[] = xml.getElementsByTagName('WayPoints').map(waypoint => ({
                 Index: parseInt(waypoint.getElementsByTagName('Index')[0].value),
                 Command: parseInt(waypoint.getElementsByTagName('Command')[0].value),
@@ -38,25 +29,32 @@ const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoint
                 Altitude: parseFloat(waypoint.getElementsByTagName('Altitude')[0].value),
                 Parameter: parseInt(waypoint.getElementsByTagName('Parameter')[0].value)
             }));
+            
             const geoFencePointList: GeoFencePoint[]= xml.getElementsByTagName('GeoFencePoint').map(geofencepoint=>({
                 Latitude: parseFloat(geofencepoint.getElementsByTagName('Latitude')[0].value),
                 Longitude: parseFloat(geofencepoint.getElementsByTagName('Longitude')[0].value),
                 
             }));
-            const goeFenceMaxAlt = parseFloat (xml.getElementsByTagName('MaxAlt')[0].value);
-            
-            const data = {
-                WayPoints: waypointsList,
-                GeoFencePoints:geoFencePointList
-            };
-            onUpdateWaypoints(data.WayPoints);
-            onUpdateGeoFencePoints(data.GeoFencePoints)
-            onMaxAltChange(goeFenceMaxAlt);
 
-        }catch(error) {
-            console.error("Error:", error)
-        }
-        }
+            const goeFenceSettingPoint = {
+                RetLat: parseFloat(xml.getElementsByTagName('GeoFenceSettings')[0].getElementsByTagName('RetLat')[0].value),
+                RetLon: parseFloat(xml.getElementsByTagName('GeoFenceSettings')[0].getElementsByTagName('RetLon')[0].value),
+                MinAlt: parseFloat(xml.getElementsByTagName('GeoFenceSettings')[0].getElementsByTagName('MinAlt')[0].value),
+                MaxAlt: parseFloat(xml.getElementsByTagName('GeoFenceSettings')[0].getElementsByTagName('MaxAlt')[0].value)
+            };
+
+            const homePoint ={
+                Latitude:  parseFloat(xml.getElementsByTagName('HomePoint')[0].getElementsByTagName('Latitude')[0].value),
+                Longitude:  parseFloat(xml.getElementsByTagName('HomePoint')[0].getElementsByTagName('Longitude')[0].value),
+                Altitude:  parseFloat(xml.getElementsByTagName('HomePoint')[0].getElementsByTagName('Altitude')[0].value)
+            }
+            onUpdateWaypoints(waypointsList);
+            onUpdateGeoFencePoints(geoFencePointList)
+            onUpdateGeoFenceSettingPoint(goeFenceSettingPoint);
+            onUpdateHomePoint(homePoint)
+        };
+        reader.readAsText(file);
+    }
 
     return(
     <form 
@@ -67,4 +65,4 @@ const Handle: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoint
     )
 };
 
-export default Handle;
+export default HandleFileInfo;

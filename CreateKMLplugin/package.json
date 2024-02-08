@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/jest": "^28.1.1",
+    "@types/react": "^18.2.55",
     "css-loader": "^6.7.1",
     "dotenv-webpack": "^7.1.1",
     "ts-jest": "^28.0.4",
