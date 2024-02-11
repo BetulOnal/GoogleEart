@@ -5,7 +5,7 @@ import { WaypointCatch, HandleProps, GeoFencePoint,GeoFenceSettingPointCatch} fr
 
 
 
-const HandleFileInfo: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFencePoints, onUpdateGeoFenceSettingPoint, onUpdateHomePoint }) => {
+const HandleFileInfo: React.FC<HandleProps> = ({ onUpdateStates }) => {
     const [file, setFile] = useState<File | undefined>();
 
     function handleFile(event:ChangeEvent<HTMLInputElement>) {
@@ -48,10 +48,12 @@ const HandleFileInfo: React.FC<HandleProps> = ({ onUpdateWaypoints,onUpdateGeoFe
                 Longitude:  parseFloat(xml.getElementsByTagName('HomePoint')[0].getElementsByTagName('Longitude')[0].value),
                 Altitude:  parseFloat(xml.getElementsByTagName('HomePoint')[0].getElementsByTagName('Altitude')[0].value)
             }
-            onUpdateWaypoints(waypointsList);
-            onUpdateGeoFencePoints(geoFencePointList)
-            onUpdateGeoFenceSettingPoint(goeFenceSettingPoint);
-            onUpdateHomePoint(homePoint)
+            onUpdateStates({
+                waypoints: waypointsList,
+                geoFencePoints: geoFencePointList,
+                geoFenceSetting: goeFenceSettingPoint,
+                homePoint: homePoint,
+              });
         };
         reader.readAsText(file);
     }

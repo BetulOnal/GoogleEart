@@ -94,6 +94,7 @@ function generateKML(
       );
     });
   };
+
   let coordinates = "";
   let placemarks = "";
   let route = "";
@@ -214,7 +215,6 @@ function generateKML(
         console.error("Unknown waypoint command");
         break;
     }
-
     return waypointName;
   };
 
@@ -299,8 +299,6 @@ function generateKML(
       }
     }
   });
-
-
   const geoFenceMaxHight = Math.round(geoFenceSettingPoint.MaxAlt);
   returnPoint = `<Placemark id="">
                 <name>Return Point</name>

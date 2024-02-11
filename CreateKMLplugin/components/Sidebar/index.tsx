@@ -26,25 +26,15 @@ export const Sidebar: FC<ISidebar> = ({ pluginApi }: ISidebar) => {
     Longitude: 0,
     Altitude: 0,
   });
-
-  const onUpdateHomePoint= (newHomePoint) => {
-    setHomePoint(newHomePoint);
+  const onUpdateStates = (newStates) => {
+    setWaypoints(newStates.waypoints);
+    setGeoFencePoints(newStates.geoFencePoints);
+    setGeoFenceSetting(newStates.geoFenceSetting);
+    setHomePoint(newStates.homePoint);
   };
-
-  const updateGeoFenceSettingPoint = (newGeoFenceSettingPoint) => {
-    setGeoFenceSetting(newGeoFenceSettingPoint);
-  };
-
-  const updateWaypoints = (newWaypoints) => {
-    setWaypoints(newWaypoints);
-  };
-  const updateGeoFencePoints = (newGeoFencePoints) => {
-    setGeoFencePoints(newGeoFencePoints);
-  };
- 
   return (
         <div>
-        <HandleFileInfo onUpdateWaypoints={updateWaypoints} onUpdateGeoFencePoints={updateGeoFencePoints} onUpdateGeoFenceSettingPoint={updateGeoFenceSettingPoint} onUpdateHomePoint={onUpdateHomePoint}/>
+        <HandleFileInfo onUpdateStates={onUpdateStates} />
         <KMLConverter waypoints={waypoints} geofencepoints={geofencepoints} geoFenceSettingPoint={geoFenceSettingPoint} homePoint={homePoint}/>
         </div>
   );
